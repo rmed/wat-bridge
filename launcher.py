@@ -27,15 +27,18 @@
 
 """Main launcher."""
 
+from __future__ import print_function
+
 import signal
 import threading
 
 from wat_bridge.static import SIGNAL_TG, SIGNAL_WA, init_bridge
-from wat_bridge.listeners import tg_listener, wa_listener
-from wat_bridge.signals import sigint_handler, to_tg_handler, to_wa_handler
 
 # Parse config file
 init_bridge()
+
+from wat_bridge.listeners import tg_listener, wa_listener
+from wat_bridge.signals import sigint_handler, to_tg_handler, to_wa_handler
 
 
 if __name__ == '__main__':

@@ -50,7 +50,7 @@ def db_add_contact(name, phone):
     Returns:
         ID of the inserted element.
     """
-    return DB.insert({'name': name, 'phone': phone, 'blacklisted': False})
+    return DB.insert({'name': name.lower(), 'phone': phone, 'blacklisted': False})
 
 def db_rm_blacklist(phone):
     """Removes a blacklisted phone from the database.
@@ -66,7 +66,7 @@ def db_rm_contact(name):
     Args:
         name (str): Name of the contact to remove.
     """
-    DB.remove(CONTACT.name == name)
+    DB.remove(CONTACT.name == name.lower())
 
 def get_blacklist():
     """Obtain a list of blacklisted phones.
@@ -106,7 +106,7 @@ def get_phone(contact):
     Returns:
         String with the phone number or `None` if not found.
     """
-    result = DB.get((CONTACT.name == contact) & (CONTACT.blacklisted == False))
+    result = DB.get((CONTACT.name == contact.lower()) & (CONTACT.blacklisted == False))
 
     if not result:
         return None

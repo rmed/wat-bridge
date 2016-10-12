@@ -29,12 +29,13 @@
 
 import sys
 
-from wat_bridge.static import SETTINGS
+from wat_bridge.static import SETTINGS, get_logger
 from wat_bridge.helper import get_contact, get_phone
 from wat_bridge.tg import tgbot
 from wat_bridge.wa import wabot
 from telebot import util as tgutil
 
+logger = get_logger('signals')
 
 def sigint_handler(signal, frame):
     """Function used as handler for SIGINT to terminate program."""
@@ -49,20 +50,25 @@ def to_tg_handler(sender, **kwargs):
         phone (str): Phone number that sent the message.
         message (str): The message received
     """
-    phone = kwargs('phone')
-    message = kwargs('message', '')
+    phone = kwargs.get('phone')
+    message = kwargs.get('message', '')
 
     # Check if known contact
     contact = get_contact(phone)
+
 
     if not contact:
         # Unknown sender
         output = 'Message from #unknown\n'
         output += 'Phone number: %s\n' % phone
 
+        logger.info('received message from unknown number: %s' % phone)
+
     else:
         # Known sender
         output = 'Message from #%s\n' % contact
+
+        logger.info('received message from %s' % contact)
 
     output += '---------\n'
     output += message
@@ -81,8 +87,8 @@ def to_wa_handler(sender, **kwargs):
         contact (str): Name of the contact to send the message to.
         message (str): The message to send
     """
-    contact = kwargs('contact')
-    message = kwargs('message')
+    contact = kwargs.get('contact')
+    message = kwargs.get('message')
 
     # Check if known contact
     phone = get_phone(contact)
@@ -95,5 +101,7 @@ def to_wa_handler(sender, **kwargs):
         )
 
         return
+
+    logger.info('sending message to %s (%s)' % (contact, phone))
 
     wabot.send_msg(phone=phone, message=message)

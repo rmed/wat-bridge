@@ -29,30 +29,31 @@
 
 import time
 
-from wat_bridge.static import LOG
+from wat_bridge.static import get_logger
 from wat_bridge.tg import tgbot
-from wat_bridge.wa import wastack, _connect_signal
+from wat_bridge.wa import WA_STACK, _connect_signal
 
+logger = get_logger('listeners')
 
 def tg_listener():
     """Poll for new messages in Telegram."""
     while True:
         try:
             # Continue even after an exception occurs
-            LOG.info('Start Telegram polling')
+            logger.info('Start Telegram polling')
             tgbot.polling(none_stop=True)
 
         except Exception as e:
-            LOG.error(e)
+            logger.error(e)
 
-            LOG.info('Start Telegram sleep')
+            logger.info('Start Telegram sleep')
             time.sleep(10)
-            LOG.info('Ended Telegram sleep')
+            logger.info('Ended Telegram sleep')
 
             pass
 
         # Stop polling and restart it in next iteration
-        LOG.info('Stop polling')
+        logger.info('Stop polling')
         tgbot.stop_polling()
 
 def wa_listener():
@@ -60,16 +61,16 @@ def wa_listener():
     while True:
         try:
             # Continue even after an exception occurs
-            LOG.info('Start Whatsapp polling')
+            logger.info('Start Whatsapp polling')
 
-            wastack.broadcastEvent(_connect_signal)
-            wastack.loop()
+            WA_STACK.broadcastEvent(_connect_signal)
+            WA_STACK.loop()
 
         except Exception as e:
-            LOG.error(e)
+            logger.error(e)
 
-            LOG.info('Start Whatsapp sleep')
+            logger.info('Start Whatsapp sleep')
             time.sleep(10)
-            LOG.info('Ended Whatsapp sleep')
+            logger.info('Ended Whatsapp sleep')
 
             pass

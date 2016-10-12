@@ -27,10 +27,10 @@
 
 """Static elements."""
 
+from six.moves import configparser
 from tinydb import TinyDB, Query
 from tinydb_smartcache import SmartCacheTable
 import blinker
-import configparser
 import logging
 import os
 import sys
@@ -46,9 +46,23 @@ CONTACT = Query()
 SIGNAL_TG = blinker.signal('TO_TG')
 SIGNAL_WA = blinker.signal('TO_WA')
 
-# Logging
-LOG = logging.getLogger('wat-bridge')
+def get_logger(name):
+    """ Get a logger with the given name. """
+    # Base logger
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
 
+    # Handler to stdout
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+
+    # Formatting
+    formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(name)s[%(funcName)s]: %(message)s')
+
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger
 
 def init_bridge():
     """Parse the configuration file and set relevant variables."""
@@ -65,7 +79,7 @@ def init_bridge():
     SETTINGS['wa_password'] = parser['wa']['password']
 
     # Telegram settings
-    SETTINGS['owner'] = parser['tg']['owner']
+    SETTINGS['owner'] = int(parser['tg']['owner'])
     SETTINGS['tg_token'] = parser['tg']['token']
 
     # TinyDB

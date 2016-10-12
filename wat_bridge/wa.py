@@ -35,16 +35,21 @@ from yowsup.layers.protocol_receipts.protocolentities import OutgoingReceiptProt
 from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEntity
 from yowsup.stacks import YowStackBuilder
 
-from wat_bridge.static import SETTINGS, SIGNAL_TG
+from wat_bridge.static import SETTINGS, SIGNAL_TG, get_logger
 from wat_bridge.helper import get_phone, is_blacklisted
+
+logger = get_logger('wa')
 
 class WaLayer(YowInterfaceLayer):
     """Defines the yowsup layer for interacting with Whatsapp."""
 
+    @ProtocolEntityCallback('message')
     def on_message(self, message):
         """Received a message."""
         # Parse information
         sender = message.getFrom(full=False)
+
+        logger.debug('received message from %s' % sender)
 
         # Send receipt
         receipt = OutgoingReceiptProtocolEntity(
@@ -58,16 +63,20 @@ class WaLayer(YowInterfaceLayer):
 
         # Do stuff
         if is_blacklisted(sender):
+            logger.debug('phone is blacklisted: %s' % sender)
             return
 
         body = message.getBody()
 
         # Relay to Telegram
+        logger.info('relaying message to Telegram')
         SIGNAL_TG.send('wabot', phone=sender, message=body)
 
     @ProtocolEntityCallback('receipt')
     def on_receipt(self, entity):
         """Received a "receipt" for a message."""
+        logger.debug('ACK message')
+
         # Acknowledge
         ack = OutgoingAckProtocolEntity(
             entity.getId(),
@@ -89,6 +98,7 @@ class WaLayer(YowInterfaceLayer):
 
         if not phone:
             # Nothing to do
+            logger.debug('no phone provided')
             return
 
         message = kwargs.get('message')
@@ -98,7 +108,7 @@ class WaLayer(YowInterfaceLayer):
             to='%s@s.whatsapp.net' % phone
         )
 
-        self.ackQueue.append(entity.getId())
+        # self.ackQueue.append(entity.getId())
         self.toLower(entity)
 
 
@@ -110,6 +120,7 @@ _connect_signal = YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT)
 WA_STACK = (
     YowStackBuilder()
     .pushDefaultLayers(True)
+    # .pushDefaultLayers(False)
     .push(wabot)
     .build()
 )

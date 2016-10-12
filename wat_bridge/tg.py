@@ -29,10 +29,12 @@
 
 import telebot
 
-from wat_bridge.static import SETTINGS, SIGNAL_WA
+from wat_bridge.static import SETTINGS, SIGNAL_WA, get_logger
 from wat_bridge.helper import db_add_contact, db_rm_contact, \
         db_add_blacklist, db_rm_blacklist, \
         get_blacklist, get_contact, get_phone, is_blacklisted \
+
+logger = get_logger('tg')
 
 # Telegram bot
 tgbot = telebot.TeleBot(
@@ -65,6 +67,15 @@ def start(message):
 
     tgbot.reply_to(message, response)
 
+@tgbot.message_handler(commands=['me'])
+def me(message):
+    """Get user ID.
+
+    Args:
+        message: Received Telegram message.
+    """
+    tgbot.reply_to(message, message.chat.id)
+
 @tgbot.message_handler(commands=['add'])
 def add_contact(message):
     """Add a new Whatsapp contact to the database.
@@ -76,6 +87,10 @@ def add_contact(message):
     Args:
         message: Received Telegram message.
     """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'You are not the owner of this bot')
+        return
+
     # Get name and phone
     args = telebot.util.extract_arguments(message.text)
     name, phone = args.split(maxsplit=1)
@@ -108,6 +123,10 @@ def blacklist(message):
     Args:
         message: Received Telegram message.
     """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
     # Get phone
     phone = telebot.util.extract_arguments(message.text)
 
@@ -143,6 +162,10 @@ def rm_contact(message):
     Args:
         message: Received Telegram message.
     """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
     # Get name
     name = telebot.util.extract_arguments(message.text)
 
@@ -171,6 +194,10 @@ def relay_wa(message):
     Args:
         message: Received Telegram message.
     """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
     # Get name and message
     args = telebot.util.extract_arguments(message.text)
     name, text = args.split(maxsplit=1)
@@ -180,6 +207,7 @@ def relay_wa(message):
         return
 
     # Relay
+    logger.info('relaying message to Whatsapp')
     SIGNAL_WA.send('tgbot', contact=name, message=text)
 
 @tgbot.message_handler(commands=['unblacklist'])
@@ -193,6 +221,10 @@ def unblacklist(message):
     Args:
         message: Received Telegram message.
     """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
     # Get phone
     phone = telebot.util.extract_arguments(message.text)
 
