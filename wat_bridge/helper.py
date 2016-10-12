@@ -27,7 +27,7 @@
 
 """Helper functions."""
 
-from wat_bridge.static import CONTACTS
+from wat_bridge.static import DB, CONTACT
 
 def get_contact(phone):
     """Get contact name from a phone number.
@@ -38,11 +38,12 @@ def get_contact(phone):
     Returns:
         String with the contact name or `None` if not found.
     """
-    for c in CONTACTS:
-        if c[1] == phone:
-            return c[0]
+    result = DB.get((CONTACT.phone == phone) & (CONTACT.blacklisted == False))
 
-    return None
+    if not result:
+        return None
+
+    return result['name']
 
 def get_phone(contact):
     """Get phone number from a contact name.
@@ -53,13 +54,12 @@ def get_phone(contact):
     Returns:
         String with the phone number or `None` if not found.
     """
-    contact = contact.lower()
+    result = DB.get((CONTACT.name == contact) & (CONTACT.blacklisted == False))
 
-    for c in CONTACTS:
-        if c[0] == contact:
-            return c[1]
+    if not result:
+        return None
 
-    return None
+    return result['phone']
 
 def is_blacklisted(phone):
     """Check if a phone number is blacklisted.
@@ -70,8 +70,9 @@ def is_blacklisted(phone):
     Returns:
         True or False
     """
-    for c in CONTACTS:
-        if phone == c[1]:
-            return True
+    result = DB.get((CONTACT.phone == phone) & (CONTACT.blacklisted == True))
 
-    return False
+    if not result:
+        return False
+
+    return True

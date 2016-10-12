@@ -27,15 +27,19 @@
 
 """Static elements."""
 
+from tinydb import TinyDB, Query
 import blinker
+import configparser
 import logging
+import os
+import sys
 
 # Main settings
 SETTINGS = {}
 
-# Contacts and blacklist
-CONTACTS = set()
-BLACKLIST = set()
+# Database
+DB = None
+CONTACT = Query()
 
 # Signals
 SIGNAL_TG = blinker.signal('TO_TG')
@@ -43,3 +47,26 @@ SIGNAL_WA = blinker.signal('TO_WA')
 
 # Logging
 LOG = logging.getLogger('wat-bridge')
+
+
+def init_bridge():
+    """Parse the configuration file and set relevant variables."""
+    conf_path = os.getenv('WAT_CONF', '')
+
+    if not conf_path or not os.path.isfile(conf_path):
+        sys.exit('Could not find configuration file')
+
+    parser = configparser.ConfigParser()
+    parser.read(conf_path)
+
+    # Whatsapp settings
+    SETTINGS['wa_phone'] = parser['wa']['phone']
+    SETTINGS['wa_password'] = parser['wa']['password']
+
+    # Telegram settings
+    SETTINGS['owner'] = parser['tg']['owner']
+    SETTINGS['tg_token'] = parser['tg']['token']
+
+    # TindyDB
+    global DB
+    DB = TinyDB(parser['db']['path'])
