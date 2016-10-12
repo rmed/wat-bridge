@@ -29,7 +29,10 @@
 
 import telebot
 
-from wat_bridge.static import SETTINGS
+from wat_bridge.static import SETTINGS, SIGNAL_WA
+from wat_bridge.helper import db_add_contact, db_rm_contact, \
+        db_add_blacklist, db_rm_blacklist, \
+        get_blacklist, get_contact, get_phone, is_blacklisted \
 
 # Telegram bot
 tgbot = telebot.TeleBot(
@@ -39,3 +42,171 @@ tgbot = telebot.TeleBot(
 )
 
 # Create handlers
+
+@tgbot.message_handler(commands=['start', 'help'])
+def start(message):
+    """Show usage of the bot.
+
+    Args:
+        message: Received Telegram message.
+    """
+    response = ('wat-bridge\n\n'
+                'Usage:\n\n'
+                '   /help -> shows this help message\n'
+                '   /add <name> <phone> -> add a new contact to database\n'
+                '   /blacklist -> show blacklisted Whatsapp phones\n'
+                '   /blacklist <phone> -> blacklist a phone number\n'
+                '   /rm <name> -> remove a contact from database\n'
+                '   /send <name> <message> -> send message to Whatsapp contact\n'
+                '   /unblacklist <phone> -> unblacklist a phone number\n\n'
+                'Note that blacklisting a phone number will make the bot ignore'
+                ' any Whatsapp messages that come from that number.'
+               )
+
+    tgbot.reply_to(message, response)
+
+@tgbot.message_handler(commands=['add'])
+def add_contact(message):
+    """Add a new Whatsapp contact to the database.
+
+    Message has the following format:
+
+        /add <name> <phone>
+
+    Args:
+        message: Received Telegram message.
+    """
+    # Get name and phone
+    args = telebot.util.extract_arguments(message.text)
+    name, phone = args.split(maxsplit=1)
+
+    if not name or not phone:
+        tgbot.reply_to(message, 'Syntax: /add <name> <phone>')
+        return
+
+    # Check if it already exists
+    if get_contact(phone) or get_phone(name):
+        tgbot.reply_to(message, 'A contact with those details already exists')
+        return
+
+    # Add to database
+    db_add_contact(name, phone)
+
+    tgbot.reply_to(message, 'Contact added')
+
+@tgbot.message_handler(commands=['blacklist'])
+def blacklist(message):
+    """Blacklist a Whatsapp phone.
+
+    Message has the following format:
+
+        /blacklist
+        /blacklist <phone>
+
+    Note that if no phone is provided, a list of blacklisted phone is returned.
+
+    Args:
+        message: Received Telegram message.
+    """
+    # Get phone
+    phone = telebot.util.extract_arguments(message.text)
+
+    if not phone:
+        # Return list
+        blacklist = get_blacklist()
+
+        response = 'Blacklisted phones:\n\n'
+        for b in blacklist:
+            response += '- %s\n' % b
+
+        tgbot.reply_to(message, response)
+        return
+
+    # Blacklist a phone
+    if is_blacklisted(phone):
+        # Already blacklisted
+        tgbot.reply_to(message, 'That phone is already blacklisted')
+        return
+
+    db_add_blacklist(phone)
+
+    tgbot.reply_to(message, 'Phone has been blacklisted')
+
+@tgbot.message_handler(commands=['rm'])
+def rm_contact(message):
+    """Remove a Whatsapp contact from the database.
+
+    Message has the following format:
+
+        /rm <name>
+
+    Args:
+        message: Received Telegram message.
+    """
+    # Get name
+    name = telebot.util.extract_arguments(message.text)
+
+    if not name:
+        tgbot.reply_to(message, 'Syntax: /rm <name>')
+        return
+
+    # Check if it already exists
+    if not get_phone(name):
+        tgbot.reply_to(message, 'No contact found with that name')
+        return
+
+    # Add to database
+    db_rm_contact(name)
+
+    tgbot.reply_to(message, 'Contact removed')
+
+@tgbot.message_handler(commands=['send'])
+def relay_wa(message):
+    """Send a message to a contact through Whatsapp.
+
+    Message has the following format:
+
+        /send <name> <message>
+
+    Args:
+        message: Received Telegram message.
+    """
+    # Get name and message
+    args = telebot.util.extract_arguments(message.text)
+    name, text = args.split(maxsplit=1)
+
+    if not name or not text:
+        tgbot.reply_to(message, 'Syntax: /send <name> <message>')
+        return
+
+    # Relay
+    SIGNAL_WA.send('tgbot', contact=name, message=text)
+
+@tgbot.message_handler(commands=['unblacklist'])
+def unblacklist(message):
+    """Unblacklist a Whatsapp phone.
+
+    Message has the following format:
+
+        /unblacklist <phone>
+
+    Args:
+        message: Received Telegram message.
+    """
+    # Get phone
+    phone = telebot.util.extract_arguments(message.text)
+
+    if not phone:
+        # Return list
+        tgbot.reply_to(message, 'Syntax: /unblacklist <phone>')
+        return
+
+    # Unblacklist a phone
+    if not is_blacklisted(phone):
+        # Not blacklisted
+        tgbot.reply_to(message, 'That phone is not blacklisted')
+        return
+
+    db_rm_blacklist(phone)
+
+    tgbot.reply_to(message, 'Phone has been unblacklisted')

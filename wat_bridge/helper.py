@@ -29,11 +29,63 @@
 
 from wat_bridge.static import DB, CONTACT
 
+def db_add_blacklist(phone):
+    """Add a new blacklisted phone to the database.
+
+    Args:
+        phone (str): Phone of the contact.
+
+    Returns:
+        ID of the inserted element.
+    """
+    return DB.insert({'name': None, 'phone': phone, 'blacklisted': True})
+
+def db_add_contact(name, phone):
+    """Add a new contact to the database.
+
+    Args:
+        name (str): Name to use for the contact.
+        phone (str): Phone of the contact.
+
+    Returns:
+        ID of the inserted element.
+    """
+    return DB.insert({'name': name, 'phone': phone, 'blacklisted': False})
+
+def db_rm_blacklist(phone):
+    """Removes a blacklisted phone from the database.
+
+    Args:
+        phone (str): Phone of the contact.
+    """
+    DB.remove((CONTACT.phone == phone) & (CONTACT.blacklisted == True))
+
+def db_rm_contact(name):
+    """Remove a contact from the the database.
+
+    Args:
+        name (str): Name of the contact to remove.
+    """
+    DB.remove(CONTACT.name == name)
+
+def get_blacklist():
+    """Obtain a list of blacklisted phones.
+
+    Returns:
+        List of strings.
+    """
+    result = DB.search(CONTACT.blacklisted == True)
+
+    if not result:
+        return []
+
+    return [a['phone'] for a in result]
+
 def get_contact(phone):
     """Get contact name from a phone number.
 
     Args:
-        phone (str): Phone to search
+        phone (str): Phone to search.
 
     Returns:
         String with the contact name or `None` if not found.

@@ -73,7 +73,7 @@ def to_tg_handler(sender, **kwargs):
 
 
 def to_wa_handler(sender, **kwargs):
-    """Handler signals sent to Whatsapp.
+    """Handle signals sent to Whatsapp.
 
     This will involve sending messages through the Whatsapp bot.
 
