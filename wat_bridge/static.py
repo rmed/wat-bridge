@@ -28,6 +28,7 @@
 """Static elements."""
 
 from tinydb import TinyDB, Query
+from tinydb_smartcache import SmartCacheTable
 import blinker
 import configparser
 import logging
@@ -67,6 +68,7 @@ def init_bridge():
     SETTINGS['owner'] = parser['tg']['owner']
     SETTINGS['tg_token'] = parser['tg']['token']
 
-    # TindyDB
+    # TinyDB
     global DB
     DB = TinyDB(parser['db']['path'])
+    DB.table_class = SmartCacheTable
