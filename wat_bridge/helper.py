@@ -52,6 +52,18 @@ def db_add_contact(name, phone):
     """
     return DB.insert({'name': name.lower(), 'phone': phone, 'blacklisted': False})
 
+def db_list_contacts():
+    """Obtain a list of contacts.
+
+    The list contains tuples with (name, phone)
+
+    Returns:
+        List of tuples
+    """
+    result = DB.search(CONTACT.blacklisted == False)
+
+    return [(a['name'], a['phone']) for a in result]
+
 def db_rm_blacklist(phone):
     """Removes a blacklisted phone from the database.
 

@@ -31,8 +31,8 @@ import telebot
 
 from wat_bridge.static import SETTINGS, SIGNAL_WA, get_logger
 from wat_bridge.helper import db_add_contact, db_rm_contact, \
-        db_add_blacklist, db_rm_blacklist, \
-        get_blacklist, get_contact, get_phone, is_blacklisted \
+        db_add_blacklist, db_rm_blacklist, db_list_contacts, \
+        get_blacklist, get_contact, get_phone, is_blacklisted
 
 logger = get_logger('tg')
 
@@ -150,6 +150,29 @@ def blacklist(message):
     db_add_blacklist(phone)
 
     tgbot.reply_to(message, 'Phone has been blacklisted')
+
+@tgbot.message_handler(commands=['contacts'])
+def list_contacts(message):
+    """List stored contacts.
+
+    Message has the following format:
+
+        /contacts
+
+    Args:
+        message: Received Telegram message.
+    """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
+    contacts = db_list_contacts()
+
+    response = 'Contacts:\n'
+    for c in contacts:
+        response += '- %s (%s)\n' % (c[0], c[1])
+
+    tgbot.reply_to(message, response)
 
 @tgbot.message_handler(commands=['rm'])
 def rm_contact(message):
