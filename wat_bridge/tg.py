@@ -56,6 +56,7 @@ def start(message):
                 'Usage:\n\n'
                 '   /help -> shows this help message\n'
                 '   /add <name> <phone> -> add a new contact to database\n'
+                '   /contacts -> list contacts\n'
                 '   /blacklist -> show blacklisted Whatsapp phones\n'
                 '   /blacklist <phone> -> blacklist a phone number\n'
                 '   /rm <name> -> remove a contact from database\n'
