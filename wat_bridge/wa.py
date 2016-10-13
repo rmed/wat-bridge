@@ -36,7 +36,7 @@ from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEnti
 from yowsup.stacks import YowStackBuilder
 
 from wat_bridge.static import SETTINGS, SIGNAL_TG, get_logger
-from wat_bridge.helper import get_phone, is_blacklisted
+from wat_bridge.helper import is_blacklisted
 
 logger = get_logger('wa')
 
@@ -60,6 +60,11 @@ class WaLayer(YowInterfaceLayer):
         )
 
         self.toLower(receipt)
+
+        # Ignore non-text messages
+        if message.getType() != 'text':
+            logger.info('not a text message, ignoring')
+            return
 
         # Do stuff
         if is_blacklisted(sender):
