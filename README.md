@@ -1,5 +1,7 @@
 # wat-bridge
 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/wat-bridge/Lobby)
+
 A bridge between WhatsApp and Telegram.
 
 This creates two listeners, one for WhatsApp and another for a Telegram bot. When the WhatsApp listener receives a message it relays the content to the Telegram bot, which sends it to the owner. In order to send a message to WhatsApp, the owner must do so through the Telegram bot.
@@ -39,6 +41,10 @@ The Telegram token is obtained by talking to the *BotFather* through Telegram an
 The WhatsApp phone must include the country code (only two digits) followed by the number, for instance `49xxxxxxxxx`, and the password can be obtained through the [Yowsup cli interface](https://github.com/tgalal/yowsup/wiki/yowsup-cli-2.0).
 
 Lastly, the database path is the full path to the file that will contain blacklist and contacts. Note that this path should be readable/writable by the user that executes the application.
+
+## Example
+
+![Communication example](screenshot.png)
 
 ## License
 
