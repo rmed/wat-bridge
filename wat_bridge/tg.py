@@ -114,8 +114,8 @@ def add_contact(message):
     tgbot.reply_to(message, 'Contact added')
 
 @tgbot.message_handler(commands=['bind'])
-def add_contact(message):
-    """Add a new Whatsapp contact to the database.
+def bind(message):
+    """Bind a contact to a group.
 
     Message has the following format:
 
@@ -158,8 +158,8 @@ def add_contact(message):
     tgbot.reply_to(message, 'Bound to group')
 
 @tgbot.message_handler(commands=['unbind'])
-def add_contact(message):
-    """Add a new Whatsapp contact to the database.
+def unbind(message):
+    """Unbind a contact from his group.
 
     Message has the following format:
 
@@ -356,8 +356,12 @@ def unblacklist(message):
     tgbot.reply_to(message, 'Phone has been unblacklisted')
 
 @tgbot.message_handler(func=lambda message: message.chat.type in ['group', 'supergroup'])
-def handle_channel(message):
+def relay_group_wa(message):
+    """ Send a message received in a bound group to the correspondending contact through Whatsapp.
 
+    Args:
+        message: Received Telegram message.
+    """
     cid = message.chat.id
     uid = message.from_user.id
 
