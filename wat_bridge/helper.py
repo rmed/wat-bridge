@@ -38,7 +38,7 @@ def db_add_blacklist(phone):
     Returns:
         ID of the inserted element.
     """
-    return DB.insert({'name': None, 'phone': phone, 'blacklisted': True})
+    return DB.insert({'name': None, 'phone': phone, 'blacklisted': True, 'group': None})
 
 def db_add_contact(name, phone):
     """Add a new contact to the database.
@@ -50,7 +50,7 @@ def db_add_contact(name, phone):
     Returns:
         ID of the inserted element.
     """
-    return DB.insert({'name': name.lower(), 'phone': phone, 'blacklisted': False})
+    return DB.insert({'name': name.lower(), 'phone': phone, 'blacklisted': False, 'group': None})
 
 def db_list_contacts():
     """Obtain a list of contacts.
@@ -62,7 +62,7 @@ def db_list_contacts():
     """
     result = DB.search(CONTACT.blacklisted == False)
 
-    return [(a['name'], a['phone']) for a in result]
+    return [(a['name'], a['phone'], a.get('group')) for a in result]
 
 def db_rm_blacklist(phone):
     """Removes a blacklisted phone from the database.
@@ -140,3 +140,37 @@ def is_blacklisted(phone):
         return False
 
     return True
+
+def db_get_group(contact):
+    result = DB.get((CONTACT.name == contact.lower()))
+
+    if not result:
+        return None
+
+    # return None for backward compatibility if there is no group column
+    return result.get('group')
+
+def db_set_group(contact, group):
+    DB.update({'group': group}, (CONTACT.name == contact.lower()))
+
+def db_get_contact_by_group(group):
+    """Get phone number from a group id.
+
+    Args:
+        group (int): Group id assigned to the contact.
+
+    Returns:
+        String with the phone number or `None` if not found.
+    """
+    result = DB.get((CONTACT.group == group))
+
+    if not result:
+        return None
+
+    return result['name']
+
+def safe_cast(val, to_type, default=None):
+    try:
+        return to_type(val)
+    except (ValueError, TypeError):
+        return default

@@ -32,7 +32,8 @@ import telebot
 from wat_bridge.static import SETTINGS, SIGNAL_WA, get_logger
 from wat_bridge.helper import db_add_contact, db_rm_contact, \
         db_add_blacklist, db_rm_blacklist, db_list_contacts, \
-        get_blacklist, get_contact, get_phone, is_blacklisted
+        get_blacklist, get_contact, get_phone, is_blacklisted, \
+        db_get_group, db_set_group, db_get_contact_by_group, safe_cast
 
 logger = get_logger('tg')
 
@@ -56,11 +57,13 @@ def start(message):
                 'Usage:\n\n'
                 '   /help -> shows this help message\n'
                 '   /add <name> <phone> -> add a new contact to database\n'
+                '   /bind <name> <group id> -> bind a contact to a group\n'
                 '   /contacts -> list contacts\n'
                 '   /blacklist -> show blacklisted Whatsapp phones\n'
                 '   /blacklist <phone> -> blacklist a phone number\n'
                 '   /rm <name> -> remove a contact from database\n'
                 '   /send <name> <message> -> send message to Whatsapp contact\n'
+                '   /unbind <name> -> unbind a contact from his group\n'
                 '   /unblacklist <phone> -> unblacklist a phone number\n\n'
                 'Note that blacklisting a phone number will make the bot ignore'
                 ' any Whatsapp messages that come from that number.'
@@ -109,6 +112,88 @@ def add_contact(message):
     db_add_contact(name, phone)
 
     tgbot.reply_to(message, 'Contact added')
+
+@tgbot.message_handler(commands=['bind'])
+def add_contact(message):
+    """Add a new Whatsapp contact to the database.
+
+    Message has the following format:
+
+        /bind <name> <group id>
+
+    Args:
+        message: Received Telegram message.
+    """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'You are not the owner of this bot')
+        return
+
+    # Get name and phone
+    args = telebot.util.extract_arguments(message.text)
+    name, group_id = args.split(maxsplit=1)
+
+    if not name or not group_id:
+        tgbot.reply_to(message, 'Syntax: /bind <name> <group id>')
+        return
+
+    group_id = safe_cast(group_id, int)
+    if not group_id:
+        tgbot.reply_to(message, 'Group id has to be a number')
+        return
+
+    # Ensure contact exists
+    if not get_phone(name):
+        tgbot.reply_to(message, 'No contact found with that name')
+        return
+
+    # Check if it already exists
+    current = db_get_contact_by_group(group_id)
+    if current:
+        tgbot.reply_to(message, 'This group is already bound to ' + current)
+        return
+
+    # Add to database
+    db_set_group(name, group_id)
+
+    tgbot.reply_to(message, 'Bound to group')
+
+@tgbot.message_handler(commands=['unbind'])
+def add_contact(message):
+    """Add a new Whatsapp contact to the database.
+
+    Message has the following format:
+
+        /unbind <name>
+
+    Args:
+        message: Received Telegram message.
+    """
+    if message.chat.id != SETTINGS['owner']:
+        tgbot.reply_to(message, 'You are not the owner of this bot')
+        return
+
+    # Get name and phone
+    name = telebot.util.extract_arguments(message.text)
+
+    if not name:
+        tgbot.reply_to(message, 'Syntax: /unbind <name>')
+        return
+
+    # Ensure contact exists
+    if not get_phone(name):
+        tgbot.reply_to(message, 'No contact found with that name')
+        return
+
+    # Check if it already exists
+    group = db_get_group(name)
+    if not group:
+        tgbot.reply_to(message, 'Contact was not bound to a group')
+        return
+
+    # Add to database
+    db_set_group(name, None)
+
+    tgbot.reply_to(message, 'Unbound from group')
 
 @tgbot.message_handler(commands=['blacklist'])
 def blacklist(message):
@@ -171,7 +256,10 @@ def list_contacts(message):
 
     response = 'Contacts:\n'
     for c in contacts:
-        response += '- %s (%s)\n' % (c[0], c[1])
+        response += '- %s (%s)' % (c[0], c[1])
+        if c[2]:
+            response += ' -> group %s' % c[2]
+        response += '\n'
 
     tgbot.reply_to(message, response)
 
@@ -266,3 +354,22 @@ def unblacklist(message):
     db_rm_blacklist(phone)
 
     tgbot.reply_to(message, 'Phone has been unblacklisted')
+
+@tgbot.message_handler(func=lambda message: message.chat.type in ['group', 'supergroup'])
+def handle_channel(message):
+
+    cid = message.chat.id
+    uid = message.from_user.id
+
+    if uid != SETTINGS['owner']:
+        tgbot.reply_to(message, 'you are not the owner of this bot')
+        return
+
+    name = db_get_contact_by_group(group=cid)
+    if not name:
+        tgbot.reply_to(message, 'no user is mapped to this group')
+        return
+
+    # Relay
+    logger.info('relaying message to Whatsapp')
+    SIGNAL_WA.send('tgbot', contact=name, message=message.text)
