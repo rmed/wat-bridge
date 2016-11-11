@@ -66,7 +66,7 @@ def get_logger(name):
 
 def init_bridge():
     """Parse the configuration file and set relevant variables."""
-    conf_path = os.getenv('WAT_CONF', '')
+    conf_path = os.path.abspath(os.getenv('WAT_CONF', ''))
 
     if not conf_path or not os.path.isfile(conf_path):
         sys.exit('Could not find configuration file')
