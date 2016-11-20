@@ -30,7 +30,7 @@
 import sys
 
 from wat_bridge.static import SETTINGS, get_logger
-from wat_bridge.helper import get_contact, get_phone
+from wat_bridge.helper import get_contact, get_phone, db_get_group
 from wat_bridge.tg import tgbot
 from wat_bridge.wa import wabot
 from telebot import util as tgutil
@@ -56,26 +56,34 @@ def to_tg_handler(sender, **kwargs):
     # Check if known contact
     contact = get_contact(phone)
 
+    chat_id = SETTINGS['owner']
 
     if not contact:
         # Unknown sender
         output = 'Message from #unknown\n'
         output += 'Phone number: %s\n' % phone
+        output += '---------\n'
+        output += message
 
         logger.info('received message from unknown number: %s' % phone)
 
     else:
-        # Known sender
-        output = 'Message from #%s\n' % contact
+        group = db_get_group(contact)
+        if not group:
+            # Known sender
+            output = 'Message from #%s\n' % contact
+            output += '---------\n'
+            output += message
+        else:
+            # Contact is bound to group
+            chat_id = group
+            output = message
 
         logger.info('received message from %s' % contact)
 
-    output += '---------\n'
-    output += message
-
     # Deliver message through Telegram
     for chunk in tgutil.split_string(output, 3000):
-        tgbot.send_message(SETTINGS['owner'], chunk)
+        tgbot.send_message(chat_id, chunk)
 
 
 def to_wa_handler(sender, **kwargs):
