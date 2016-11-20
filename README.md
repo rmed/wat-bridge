@@ -42,6 +42,17 @@ The WhatsApp phone must include the country code (only two digits) followed by t
 
 Lastly, the database path is the full path to the file that will contain blacklist and contacts. Note that this path should be readable/writable by the user that executes the application.
 
+## Simulate different chats
+
+By default, communication with Whatsapp contacts is done through the **chat with the Telegram bot** (ie. using the `/send <user> <msg>` command). It is possible to simulate having different conversations with Whatsapp contacts by using **empty group chats in Telegram**. This works as follows:
+
+1. Create an empty group chat
+2. Invite the Telegram bot to the empty chat
+3. Get chat id with the `/me` command
+4. Bind a Whatsapp contact to the group with `/me <contact name> <group id>`, where `<group id>` is the id obtained in **step 3**
+
+Now every message sent to that group will be relayed to the bound Whatsapp contact automatically and all the messages the Whatsapp bot receives from that contact will be send to the bound Telegram group.
+
 ## Example
 
 ![Communication example](screenshot.png)
