@@ -51,7 +51,7 @@ By default, communication with WhatsApp contacts is done through the **chat with
 1. Create an empty group chat
 2. Invite the Telegram bot to the empty chat
 3. Get chat id with the `/me` command
-4. Bind a WhatsApp contact to the group with `/me <contact name> <group id>`, where `<group id>` is the id obtained in **step 3**
+4. Bind a WhatsApp contact to the group with `/bind <contact name> <group id>`, where `<group id>` is the id obtained in **step 3**
 
 Now every message sent to that group will be relayed to the bound WhatsApp contact automatically and all the messages the WhatsApp bot receives from that contact will be send to the bound Telegram group.
 
