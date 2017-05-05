@@ -75,14 +75,14 @@ def init_bridge():
     parser.read(conf_path)
 
     # Whatsapp settings
-    SETTINGS['wa_phone'] = parser['wa']['phone']
-    SETTINGS['wa_password'] = parser['wa']['password']
+    SETTINGS['wa_phone'] = parser.get('wa', 'phone')
+    SETTINGS['wa_password'] = parser.get('wa', 'password')
 
     # Telegram settings
-    SETTINGS['owner'] = int(parser['tg']['owner'])
-    SETTINGS['tg_token'] = parser['tg']['token']
+    SETTINGS['owner'] = parser.getint('tg', 'owner')
+    SETTINGS['tg_token'] = parser.get('tg', 'token')
 
     # TinyDB
     global DB
-    DB = TinyDB(parser['db']['path'])
+    DB = TinyDB(parser.get('db', 'path'))
     DB.table_class = SmartCacheTable
