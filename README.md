@@ -40,7 +40,7 @@ path = PATH_TO_DB
 
 The Telegram token is obtained by talking to the *BotFather* through Telegram and creating a bot, while the owner ID can be obtained by using the `/me` command.
 
-The WhatsApp phone must include the country code (only two digits) followed by the number, for instance `49xxxxxxxxx`, and the password can be obtained through the [Yowsup cli interface](https://github.com/tgalal/yowsup/wiki/yowsup-cli-2.0).
+The WhatsApp phone must include the country code (without any additional characters such as `+`, only the digits) followed by the number, for instance `49xxxxxxxxx`, and the password can be obtained through the [Yowsup cli interface](https://github.com/tgalal/yowsup/wiki/yowsup-cli-2.0).
 
 Lastly, the database path is the full path to the file that will contain blacklist and contacts. Note that this path should be readable/writable by the user that executes the application.
 
